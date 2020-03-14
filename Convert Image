@@ -1,0 +1,87 @@
+  public DataSet convertImage(DataSet ds)
+        {
+            //  DataTable dt = new DataTable();
+            ds.Tables[1].Columns.Add("TeacherImage", typeof(System.Byte[]));
+            ds.Tables[1].Columns.Add("TeacherSignImage", typeof(System.Byte[]));
+            FileStream picfs;
+            BinaryReader picbr;
+            for (int i = 0; i < ds.Tables[1].Rows.Count; i++)
+            {
+                String imagePath = Server.MapPath("\\affiliation\\Content\\UploadedDocs\\College" + Convert.ToString(ds.Tables[1].Rows[i]["PhotoPath"]));
+                if (System.IO.File.Exists(imagePath))
+                {
+                    picfs = new FileStream(imagePath, FileMode.Open);
+                    try
+                    {
+                        picbr = new BinaryReader(picfs);
+                        byte[] imgbyte = new byte[picfs.Length + 1];
+                        imgbyte = picbr.ReadBytes(Convert.ToInt32((picfs.Length)));
+                        ds.Tables[1].Rows[i]["TeacherImage"] = ResizeImageFile(imgbyte, 210);
+                        picfs.Close();
+                        picbr.Close();
+                    }
+                    catch { picfs.Close(); }
+                    finally { picfs.Close(); }
+                }
+                ds.Tables[1].AcceptChanges();
+                String imageSignPath = Server.MapPath("\\affiliation\\Content\\UploadedDocs\\College" + Convert.ToString(ds.Tables[1].Rows[i]["SignPath"]));
+                if (System.IO.File.Exists(imageSignPath))
+                {
+                    picfs = new FileStream(imageSignPath, FileMode.Open);
+                    try
+                    {
+                        picbr = new BinaryReader(picfs);
+                        byte[] imgbyte = new byte[picfs.Length + 1];
+                        imgbyte = picbr.ReadBytes(Convert.ToInt32((picfs.Length)));
+                        ds.Tables[1].Rows[i]["TeacherSignImage"] = ResizeImageFile(imgbyte, 210);
+                        picfs.Close();
+                        picbr.Close();
+                    }
+                    catch { picfs.Close(); }
+                    finally { picfs.Close(); }
+                }
+                ds.Tables[1].AcceptChanges();
+            }
+            return ds;
+
+        }
+
+
+        public byte[] ResizeImageFile(byte[] imageFile, int targetSize)
+        {
+            using (Image oldImage = Image.FromStream(new MemoryStream(imageFile)))
+            {
+                Size newSize = CalculateDimensions(oldImage.Size, targetSize);
+
+                using (Bitmap newImage = new Bitmap(newSize.Width, newSize.Height, PixelFormat.Format24bppRgb))
+                {
+                    using (Graphics canvas = Graphics.FromImage(newImage))
+                    {
+                        canvas.SmoothingMode = SmoothingMode.AntiAlias;
+                        canvas.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                        canvas.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                        canvas.DrawImage(oldImage, new Rectangle(new Point(0, 0), newSize));
+                        MemoryStream m = new MemoryStream();
+                        newImage.Save(m, System.Drawing.Imaging.ImageFormat.Jpeg);
+                        return m.GetBuffer();
+                    }
+                }
+            }
+        }
+
+
+        public Size CalculateDimensions(Size oldSize, int targetSize)
+        {
+            Size newSize = new Size();
+            if (oldSize.Height > oldSize.Width)
+            {
+                newSize.Width = (int)(oldSize.Width * ((float)targetSize / (float)oldSize.Height));
+                newSize.Height = targetSize;
+            }
+            else
+            {
+                newSize.Width = targetSize;
+                newSize.Height = (int)(oldSize.Height * ((float)targetSize / (float)oldSize.Width));
+            }
+            return newSize;
+        }
