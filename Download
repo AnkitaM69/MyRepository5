@@ -1,0 +1,79 @@
+ public ActionResult DownloadPart_1_Report()
+        {
+            CGeneral objGen = new CGeneral();
+            List<Part1ReportModel> Model = new List<Part1ReportModel>();
+            objDal = new CollegeDetailsDAL();
+            var details = objDal.InsertStaffData(0, SessionManager.RegId, 2, "").ToList();
+            var Instidetails = objDal.GetCollegeInstutionDetails(SessionManager.RegId, 2).ToList();
+            Model = objDal.GetPart1Reportdata(SessionManager.RegId).ToList();
+            var ModelStaff = objDal.GetNumberOfStaff(1, SessionManager.RegId).ToList();
+            var ModelStaffDetails = objDal.GetNumberOfStaff(3, SessionManager.RegId).ToList();
+            DataSet ds = new DataSet();
+            DataTable dt = new DataTable();
+            DataTable dtTeachingStaff = new DataTable();
+            DataTable dtInstidetails = new DataTable();
+            DataTable dtStaff = new DataTable();
+            DataTable dtStaffDetails = new DataTable();
+            dt = objGen.Convert_LINQResult_To_DataTable<Part1ReportModel>(Model);
+            dtTeachingStaff = objGen.Convert_LINQResult_To_DataTable<TeachingStaff>(details);
+            dtInstidetails = objGen.Convert_LINQResult_To_DataTable<InstituteDetailsModel>(Instidetails);
+            dtStaffDetails = objGen.Convert_LINQResult_To_DataTable<StaffMemberDetailsModel>(ModelStaffDetails);
+            dtStaff = objGen.Convert_LINQResult_To_DataTable<StaffMemberDetailsModel>(ModelStaff);
+            dt.TableName = "dsReport1Details";
+            dtTeachingStaff.TableName = "dsTeachingStaff";
+            dtInstidetails.TableName = "dsInstidetails";
+            dtStaffDetails.TableName = "dsStaffDetails";
+            dtStaff.TableName = "dsStaff";
+            ds.Tables.Add(dt);
+            ds.Tables.Add(dtTeachingStaff);
+            ds.Tables.Add(dtInstidetails);
+            ds.Tables.Add(dtStaffDetails);
+            ds.Tables.Add(dtStaff);
+            if (ds != null && ds.Tables[0].Rows.Count > 0)
+            {
+                var Url = Convert.ToString(ConfigurationManager.AppSettings["RootURL2"]);
+                ds.Tables[0].Columns.Add("DocumentUrl", typeof(System.String));
+                ds.Tables[1].Columns.Add("DocumentUrl", typeof(System.String));
+                ds.Tables[2].Columns.Add("DocumentUrl", typeof(System.String));
+                ds.Tables[3].Columns.Add("DocumentUrl", typeof(System.String));
+                ds.Tables[0].Rows[0]["DocumentUrl"] = Url;
+                ds.Tables[1].Rows[0]["DocumentUrl"] = Url;
+                ds.Tables[2].Rows[0]["DocumentUrl"] = Url;
+                ds.Tables[3].Rows[0]["DocumentUrl"] = Url;
+                DataSet dsConverted = convertImage(ds);
+                ReportDocument rd = new ReportDocument();
+                rd.Load(Path.Combine(Server.MapPath("~/Report/"), "Part_1_Report.rpt"));
+                rd.SetDataSource(dsConverted);
+                rd.SetParameterValue("RootUrlStaff", ConfigurationManager.AppSettings["RootURL2"].ToString());
+                rd.SetParameterValue("RootUrlTeaching", ConfigurationManager.AppSettings["RootURL2"].ToString());
+                rd.SetParameterValue("RootUrlMember", ConfigurationManager.AppSettings["RootURL2"].ToString());
+                Response.Buffer = false;
+                Response.ClearContent();
+                Response.ClearHeaders();
+                try
+                {
+                    Stream stream = rd.ExportToStream(CrystalDecisions.Shared.ExportFormatType.PortableDocFormat);
+                    rd.Dispose();
+                    stream.Seek(0, SeekOrigin.Begin);
+                    return File(stream, "Part1Report/pdf", "Part1Report.pdf");
+                    // return File(stream, "Part1Report.pdf");
+                }
+                catch (Exception ex)
+                {
+                    DisplayMessage("Error", "Details not found !", "w");
+                }
+            }
+
+            else
+            {
+                DisplayMessage("Error", "Details not found !", "w");
+            }
+            if (SessionManager.RoleID != "COL")
+            {
+                return RedirectToAction("CollegeForInspection", "Inspection", new { RID = EncryptionDecryption.Encrypt(SessionManager.RegId.ToString()) });
+            }
+            else
+            {
+                return RedirectToAction("Download", "CollegeDetails");
+            }
+        }
