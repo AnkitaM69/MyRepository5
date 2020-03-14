@@ -1,0 +1,80 @@
+function AddRow() {
+    _name = $("#txtName").val();
+    _Fname = $("#txtFatherName").val();
+    _dob = $("#txtDOB").val();
+    _genderId = $("#ddlGender").val();
+    _genderName = $("#ddlGender option:selected").text();
+    _mobile = $("#txtMobile").val();
+    _email = $("#txtEmail").val();
+    if (_name != "" && _Fname != "" && _dob != "" && _genderName != "" && _mobile != "" && _email != "") {
+        var rowNo = $("#tblAdd tr[ref]:last").index() + 1;
+        $("#tblAdd tr[ref]:last").after('<tr ref=""><td name="Sno">' + rowNo + '</td><td name="name">' + _name + '</td><td name="Fname">' + _Fname + '</td><td name="dob">' + _dob + '</td><td name="genderName" data-val="' + _genderId + '">' + _genderName + '</td><td name="mobile">' + _mobile + '</td><td name="email">' + _email + '</td><td><a onclick="DeleteRow(this)">X</a></td>');
+        Reset();
+    }
+}
+
+function Reset() {
+    $("#txtName").val("");
+    $("#txtFatherName").val("");
+    $("#txtDOB").val("");
+    $("#ddlGender").val("");
+    $("#txtEmail").val("");
+    $("#txtMobile").val("");
+}
+
+function DeleteRow(obj) {
+    $(obj).parent().parent().remove();
+    $("#tblAdd tr[ref]").each(function () {
+        $(this).find("td[name='Sno']").html(index);
+    });
+}
+
+
+function submitForm() {
+    var personalXmlLst = [];
+    var isOk = true;
+    var count = 0;
+    $("#tblAdd tr[ref]").each(function () {
+        if (count > 0) {
+            var _name = $(this).find("td[name='name']").html();
+            var _Fname = $(this).find("td[name='Fname']").html();
+            var _dob = $(this).find("td[name='dob']").html();
+            var _genderId = $(this).find("td[name='genderName']").attr("data-val");
+            var _mobile = $(this).find("td[name='mobile']").html();
+            var _email = $(this).find("td[name='email']").html();
+            if ((_name != "undefined" && _name != "") && (_Fname != "undefined" && _Fname != "") && (_dob != "undefined" && _dob != "") && (_genderId != "undefined" && _genderId != "") && (_mobile != "undefined" && _mobile != "") && (_email != "undefined" && _email != "")) {
+                personalXmlLst.push({
+                    Name: _name,
+                    FarherName: _Fname,
+                    DOB: _dob,
+                    Gender: _genderId,
+                    Mobile: _mobile,
+                    Email: _email,
+                });
+            }
+            else {
+                alert("Please Fill All required Data before form submition.")
+                isOk = false;
+                return false;
+            }
+            if (!isOk) {
+                return false;
+            }
+        }
+        count++;
+    });
+
+    if (personalXmlLst != '[]' && personalXmlLst != '') {
+        var data = JSON.stringify(personalXmlLst);
+        $("#XmlList").val(data)
+    }
+    else {
+        swal("Required !", " Please add atleast one Particulars Of Member.", "warning")
+        isOk = false;
+        return false;
+    }
+    if (!isOk) {
+        return false;
+    }
+
+}
