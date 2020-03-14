@@ -1,0 +1,41 @@
+ IF @StainerDetail IS NOT NULL
+    AND @StainerDetail.exist('/DocumentElement') = 1
+    BEGIN 
+        WITH    XmlData
+                  AS ( SELECT   doc.col.value('HowDeeply[1]', 'DECIMAL(10,2)') AS HowDeeply ,
+                                doc.col.value('ToWhatDepth[1]',
+                                              'DECIMAL(10,2)') AS ToWhatDepth ,
+                                doc.col.value('Length[1]', 'DECIMAL(10,2)') AS Length ,
+                                doc.col.value('Diameter[1]', 'DECIMAL(10,2)') AS Diameter ,
+                                doc.col.value('StainerDetailID[1]', 'int') AS StainerDetailID
+                       FROM     @StainerDetail.nodes('DocumentElement/XMLData')
+                                AS doc ( col )
+                     )
+            MERGE INTO [dbo].[StainerDetail] t
+            USING XmlData x
+            ON ( t.RegistrationID = @RegistrationID
+                 AND t.StainerDetailID = x.StainerDetailID
+               )
+            WHEN MATCHED THEN
+                UPDATE SET
+                         t.HowDeeply = x.HowDeeply ,
+                         t.ToWhatDepth = x.ToWhatDepth ,
+                         t.Length = x.Length ,
+                         t.Diameter = x.Diameter
+            WHEN NOT MATCHED BY TARGET THEN
+                INSERT ( RegistrationID ,
+                         HowDeeply ,
+                         ToWhatDepth ,
+                         Length ,
+                         Diameter
+                       )
+                VALUES ( @RegistrationID ,
+                         x.HowDeeply ,
+                         x.ToWhatDepth ,
+                         x.Length ,
+                         x.Diameter
+                       )
+            WHEN NOT MATCHED BY SOURCE AND t.RegistrationID = @RegistrationID
+                THEN
+                DELETE ;     
+    END; 
