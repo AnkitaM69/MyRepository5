@@ -1,0 +1,53 @@
+  public ActionResult Amenities(Amenities Model)
+        {
+            CollegeDetailsDAL objMcon = new CollegeDetailsDAL();
+            var ProcId = 1;
+            if (SessionManager.ADMstepNo != 0)
+            {
+                ProcId = 3;
+            }
+            XElement XML = new XElement("table");
+            if (Model.XmlAmenitiesDetails != null && Model.XmlAmenitiesDetails != "[]")
+            {
+
+                List<Amenities> AmenitiesList = JsonConvert.DeserializeObject<List<Amenities>>(Model.XmlAmenitiesDetails);
+                for (int i = 0; i < AmenitiesList.Count; i++)
+                {
+                    XElement elements = new XElement("AmenitiesList",
+                        new XElement("amenitiesId", AmenitiesList[i].amenitiesId)
+                       , new XElement("RegId", SessionManager.RegId)
+                       , new XElement("TransId", AmenitiesList[i].TransId)
+                       , new XElement("Availablity", AmenitiesList[i].Availablity)
+                       , new XElement("No", AmenitiesList[i].No)
+                       , new XElement("Area", AmenitiesList[i].Area)
+                       , new XElement("Reason", AmenitiesList[i].Reason)
+                       , new XElement("AdminRemark", AmenitiesList[i].AdminRemark));
+                    XML.Add(elements);
+                }
+                var details = objMcon.InsertAmenitiesData(SessionManager.RegId, XML.ToString(), ProcId);
+                if (details[0].Status != "")
+                {
+                    if (SessionManager.stepNo == 14)
+                    {
+                        SessionManager.stepNo = 15;
+                    }
+                    if (ProcId == 1)
+                    {
+                        DisplayMessage("Success !!", "Amenities details saved successfully.", "s");
+                    }
+                    else
+                    {
+                        DisplayMessage("Submitted !!", "Remark submitted successfully.", "s");
+                    }
+                }
+                else
+                {
+                    DisplayMessage("Error !!", "Some error occurred", "e");
+                }
+            }
+            else
+            {
+                DisplayMessage("Error !!", "Some error occurred", "e");
+            }
+            return RedirectToAction("SeatDetails");
+        }
