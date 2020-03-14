@@ -1,0 +1,40 @@
+ public class SessionManager
+    {
+        public static string UserName
+        {
+            get
+            {
+                if (HttpContext.Current.Session["UserName"] != null)
+                {
+                    return (HttpContext.Current.Session["UserName"]).ToString();
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            set
+            {
+                HttpContext.Current.Session["UserName"] = value;
+            }
+        }
+
+        public static string UserId
+        {
+            get
+            {
+                if (HttpContext.Current.Session["UserId"] != null)
+                {
+                    return (HttpContext.Current.Session["UserId"]).ToString();
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            set
+            {
+                HttpContext.Current.Session["UserId"] = value;
+            }
+        }
+        }
