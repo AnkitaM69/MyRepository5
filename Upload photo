@@ -1,0 +1,128 @@
+        [HttpPost]
+        public JsonResult UploadFile()
+        {
+            string _docname = string.Empty;
+            string[] str = null;
+            if (System.Web.HttpContext.Current.Request.Files.AllKeys.Any())
+            {
+                var doc = System.Web.HttpContext.Current.Request.Files["MyImages"];
+                string reportName = System.Web.HttpContext.Current.Request.Form["ReportName"].ToString();
+                if (doc.ContentLength > 0)
+                {
+                    _docname = Upload(doc, reportName);
+                    str = _docname.Split('_');
+                }
+            }
+            return Json(str, JsonRequestBehavior.AllowGet);
+        }
+
+        public string Upload(HttpPostedFile uploadFile, string reportName)
+        {
+            if (uploadFile.ContentLength > 0)
+            {
+
+                DateTime tm = DateTime.Now;
+                string _docname = string.Empty;
+                string filename = uploadFile.FileName;
+                string dirPath = AppDomain.CurrentDomain.BaseDirectory;
+                string fileURl = "./Content/UploadedDocs/RegistrationDocs/";
+                _docname = DateTime.Now.ToString("yyyyMMddHHmmssffff");
+                string cirfileName = reportName + SessionManager.RegId + _docname;
+                string cirextn = Path.GetExtension(filename);
+
+                try
+                {
+                    String fn = Path.GetFileNameWithoutExtension(filename);
+                    String ext = Path.GetExtension(filename);
+                    char[] SpecialChars = "!@#$%^&*()+=~`\\|/?><,\"".ToCharArray();
+                    int indexOf = fn.IndexOfAny(SpecialChars);
+                    String fileName1 = fn;
+                    int count = fileName1.Split('.').Length - 1;
+                    if (count > 1)
+                    {
+                        return "Double extension are not allowed in File Name, please rename and try again.";
+                    }
+                    if (indexOf != -1)
+                    {
+                        return "Special character are not allowed in File Name, please rename and try again";
+                    }
+
+                    string mimetype = uploadFile.ContentType;
+                    if (mimetype == "image/jpeg" || mimetype == "image/jpg" || mimetype == "image/jpeg" || mimetype == "application/jpg" || mimetype == "application/x-jpg" || mimetype == "image/pipeg" || mimetype == "image/vnd.swiftview-jpeg" || mimetype == "image/x-xbitmap" || mimetype == "application/octet-stream" || mimetype == "application/pdf")
+                    {
+                        if ((ext.ToLower() == ".jpg") || (ext.ToLower() == ".jpeg") || ext.ToLower() == ".pdf")
+                        {
+                            fn = "";
+                            string fFullName = filename;
+                            int len = fFullName.Length;
+                            string ext1 = Path.GetExtension(fFullName);
+                            string str = fFullName.Substring(fFullName.LastIndexOf("\\") + 1);
+                            len = str.Length;
+                            string fileN = str.Substring(0, len - ext1.Length);
+
+                            Regex FilenameRegex = null;
+                            FilenameRegex = new Regex("(.*?)\\.(jpeg|jpg|pdf|JPEG|JPG|PDF)$", RegexOptions.IgnoreCase);
+                            int index = fileN.IndexOf(".");
+
+                            if (!FilenameRegex.IsMatch(fFullName) || index != -1)
+                            {
+
+                                return "Save file without any special character for File name except file extension";
+                            }
+                            else
+                            {
+                                string Photoname = Path.GetFileNameWithoutExtension(filename);
+                                string fileSize = uploadFile.ContentLength.ToString();
+                                String ImageFileNameMBA = filename;
+                                Byte[] stu_imageMBA = new Byte[uploadFile.ContentLength];
+
+                                Stream fs = uploadFile.InputStream;
+                                fs.Read(stu_imageMBA, 0, Convert.ToInt32(fileSize));
+
+                                fs.Seek(0, SeekOrigin.Begin);
+                                StreamReader sr = new StreamReader(fs, true);
+
+                                string firstLine = sr.ReadLine().ToString();
+
+                                if (uploadFile.ContentLength <= 10485760)
+                                {
+                                    fs.Seek(0, SeekOrigin.Begin);
+
+                                    Stream inputStream = uploadFile.InputStream;
+
+                                    if (System.IO.File.Exists(dirPath + fileURl + cirfileName + cirextn))
+                                    {
+                                        System.IO.File.Delete(dirPath + fileURl + cirfileName + cirextn);
+                                    }
+
+                                    FileStream fs1 = System.IO.File.Create(dirPath + fileURl + cirfileName + cirextn);
+
+                                    uploadFile.InputStream.CopyTo(fs1);
+                                    fs1.Close();
+
+                                    return "Success_" + cirfileName + cirextn;
+                                }
+                                else
+                                {
+                                    return "Image size can not exceed 12 mb kb in file.";
+                                }
+                            }
+                        }
+                        else
+                        {
+                            return "Please upload .jpg or .jpeg or .pdf file only.";
+                        }
+                    }
+                    else
+                    {
+                        return "Please upload .jpg or .jpeg or .pdf file only";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return "Selected file is not uploaded. Please try again.";
+                }
+            }
+
+            return "Selected file is not uploaded. Please try again. ";
+        }
